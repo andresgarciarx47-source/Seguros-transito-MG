@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soportes & Seguros Tránsito MG</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .drag-active { border-color: #2563eb !important; background-color: #eff6ff !important; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- BARRA SUPERIOR -->
+  <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- LOGO Y TÍTULO MG -->
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-blue-600 rounded-lg text-white font-black tracking-wider text-sm flex items-center justify-center shadow-md">
+          MG
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight flex items-center">
+            Soportes & Seguros Tránsito <span class="ml-1 text-blue-400 font-black">MG</span>
+          </h1>
+          <p class="text-xs text-slate-400 hidden sm:block">Control Contable, Ingresos de Terceros y Justificación DIAN</p>
+        </div>
+      </div>
+      
+      <!-- ACCIONES Y USUARIO -->
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        
+        <!-- Indicador de Usuario y Rol -->
+        <div id="badge-usuario" class="text-xs px-3 py-1.5 rounded-full flex items-center font-medium bg-slate-800 border border-slate-700 text-slate-200">
+          <i data-lucide="user" class="w-3.5 h-3.5 mr-1.5 text-blue-400"></i>
+          <span id="texto-usuario">Cargando...</span>
+        </div>
+
+        <!-- Botón Panel de Administración (Solo Admin) -->
+        <button id="btn-panel-admin" onclick="abrirPanelAdmin()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center shadow transition hidden">
+          <i data-lucide="shield" class="w-3.5 h-3.5 mr-1.5"></i>
+          Panel Admin
+        </button>
+
+        <!-- Botón Iniciar / Cerrar Sesión -->
+        <button id="btn-auth-action" onclick="toggleAuthModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center transition">
+          <i data-lucide="log-in" class="w-3.5 h-3.5 mr-1.5"></i>
+          <span id="texto-auth-action">Ingresar</span>
+        </button>
+
+        <!-- Botón Descargar Excel (Solo Admin) -->
+        <button id="btn-descargar-excel" onclick="descargarExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg flex items-center shadow transition hidden">
+          <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-1.5"></i>
+          Excel DIAN
+        </button>
+
+      </div>
+    </div>
+
+    <!-- BANNER ENLACE PÚBLICO O DOMINIO -->
+    <div id="banner-dominio" class="bg-blue-900/90 text-blue-100 text-xs px-4 py-2 border-t border-blue-800 flex items-center justify-between">
+      <div class="max-w-7xl mx-auto w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <span class="flex items-center">
+          <i data-lucide="globe" class="w-4 h-4 mr-2 text-cyan-300"></i>
+          <span><strong>Dominio propio para compañeros:</strong> <span id="texto-dominio" class="font-mono underline select-all">Cargando enlace...</span></span>
+        </span>
+        <div class="flex items-center space-x-2">
+          <button onclick="copiarDominio()" class="bg-blue-700 hover:bg-blue-600 px-2.5 py-1 rounded text-white font-medium flex items-center text-xs transition">
+            <i data-lucide="copy" class="w-3.5 h-3.5 mr-1"></i> Copiar Dominio
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+    <!-- TARJETAS DE RESUMEN CONTABLE (DIAN) -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Motos del Mes -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Motos Este Mes</p>
+          <h3 id="stat-motos" class="text-2xl font-black text-slate-900 mt-1">0</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Seguros tramitados</p>
+        </div>
+        <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+          <i data-lucide="bike" class="w-7 h-7"></i>
+        </div>
+      </div>
+
+      <!-- Total Pagado a Aseguradoras (Terceros) -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-amber-600 uppercase tracking-wider">Pagado Aseguradoras</p>
+          <h3 id="stat-pagado" class="text-2xl font-black text-slate-900 mt-1">$ 0</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Dinero de terceros (No es ganancia)</p>
+        </div>
+        <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+          <i data-lucide="receipt" class="w-7 h-7"></i>
+        </div>
+      </div>
+
+      <!-- Comisiones Ganadas (Solo Admin) -->
+      <div id="card-comisiones" class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Comisiones Netas</p>
+          <h3 id="stat-comision" class="text-2xl font-black text-emerald-600 mt-1">$ 0</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Tu ganancia real gravable</p>
+        </div>
+        <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+          <i data-lucide="wallet" class="w-7 h-7"></i>
+        </div>
+      </div>
+
+      <!-- Total Movido en Cuenta (Solo Admin) -->
+      <div id="card-total" class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Total Flujo en Cuenta</p>
+          <h3 id="stat-total" class="text-2xl font-black text-slate-900 mt-1">$ 0</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Lo que ve el extracto bancario</p>
+        </div>
+        <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+          <i data-lucide="landmark" class="w-7 h-7"></i>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- FORMULARIO DE REGISTRO RÁPIDO -->
+    <section id="seccion-formulario" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2">
+          <span class="p-1.5 bg-blue-100 text-blue-700 rounded-lg">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+          </span>
+          <h2 class="text-lg font-bold text-slate-900">Registrar Moto y Comprobante</h2>
+        </div>
+        
+        <!-- BOTÓN LIMPIAR TODO EL FORMULARIO -->
+        <button type="button" onclick="limpiarFormularioCompleto()" class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-red-700 bg-slate-100 hover:bg-red-50 border border-slate-300 hover:border-red-300 rounded-lg transition shadow-sm">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 mr-1.5 text-slate-500"></i>
+          Limpiar Todos los Campos
+        </button>
+      </div>
+
+      <form id="form-registro" onsubmit="guardarRegistro(event)" class="space-y-4">
+        
+        <!-- DROPZONE COMPROBANTE PDF -->
+        <div 
+          id="dropzone" 
+          ondragover="onDragOver(event)" 
+          ondragleave="onDragLeave(event)" 
+          ondrop="onDropFile(event)"
+          onclick="document.getElementById('input-archivo').click()"
+          class="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-xl p-4 text-center cursor-pointer bg-slate-50/70 transition flex flex-col items-center justify-center relative"
+        >
+          <input type="file" id="input-archivo" accept=".pdf" class="hidden" onchange="seleccionarArchivo(this)">
+          <div id="dropzone-vacio" class="flex flex-col items-center">
+            <i data-lucide="upload-cloud" class="w-8 h-8 text-blue-600 mb-1"></i>
+            <p class="text-sm font-semibold text-slate-700">Arrastra el comprobante PDF aquí o <span class="text-blue-600 underline">haz clic para buscar</span></p>
+            <p class="text-xs text-slate-400 mt-0.5">Formatos PSE Bancolombia, Banco de Bogotá, etc.</p>
+          </div>
+          <div id="dropzone-cargado" class="hidden flex items-center space-x-3 w-full max-w-md bg-white border border-slate-200 rounded-lg p-2.5 shadow-sm">
+            <div class="p-2 bg-red-100 text-red-600 rounded">
+              <i data-lucide="file-text" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 text-left min-w-0">
+              <p id="archivo-nombre" class="text-sm font-semibold text-slate-800 truncate">archivo.pdf</p>
+              <p id="archivo-tamano" class="text-xs text-slate-400">0 KB</p>
+            </div>
+            <button type="button" onclick="quitarArchivo(event)" class="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-red-500" title="Quitar archivo">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+          
+          <div id="deteccion-alert" class="hidden mt-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1 flex items-center">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>
+            <span id="deteccion-mensaje">Información extraída automáticamente del PDF.</span>
+          </div>
+        </div>
+
+        <!-- CAMPOS DEL FORMULARIO -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Placa de la Moto *</label>
+            <input type="text" id="campo-placa" required placeholder="Ej: ABC12D" uppercase
+              class="w-full uppercase font-mono font-bold tracking-wider px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Cédula del Comprador</label>
+            <input type="text" id="campo-cedula" placeholder="Ej: 1020304050"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+          </div>
+
+          <div class="lg:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nombres y Apellidos Completos *</label>
+            <input type="text" id="campo-nombre" required placeholder="Ej: Carlos Alberto Pérez Gómez"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Número de Teléfono</label>
+            <input type="tel" id="campo-telefono" placeholder="Ej: 310 123 4567"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Concesionario *</label>
+            <input type="text" id="campo-concesionario" list="lista-concesionarios" required placeholder="Ej: Yamaha, Auteco, Suzuki..."
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+            <datalist id="lista-concesionarios">
+              <option value="Yamaha">
+              <option value="Auteco">
+              <option value="Honda">
+              <option value="Suzuki">
+              <option value="AKT Motos">
+              <option value="Bajaj">
+              <option value="KTM">
+              <option value="Hero">
+            </datalist>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Valor Pagado Seguro (PSE) *</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
+              <input type="number" step="100" id="campo-valor" required placeholder="Ej: 650000"
+                class="w-full pl-8 pr-3 py-2 font-semibold bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+            </div>
+          </div>
+
+          <!-- Comisión Ganada (Visible solo para administradores) -->
+          <div id="contenedor-campo-comision">
+            <label class="block text-xs font-bold text-emerald-700 uppercase mb-1">Mi Comisión Ganada *</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-emerald-600 font-bold">$</span>
+              <input type="number" step="100" id="campo-comision" placeholder="Ej: 35000" value="0"
+                class="w-full pl-8 pr-3 py-2 font-semibold bg-emerald-50/50 border border-emerald-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Banco / Medio</label>
+            <select id="campo-banco" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition text-sm">
+              <option value="Banco de Bogotá (PSE)">Banco de Bogotá (PSE)</option>
+              <option value="Bancolombia (PSE)">Bancolombia (PSE)</option>
+              <option value="Davivienda (PSE)">Davivienda (PSE)</option>
+              <option value="PSE Otro">PSE Otro</option>
+              <option value="Transferencia">Transferencia</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">No. Referencia / CUS</label>
+            <input type="text" id="campo-referencia" placeholder="Ej: 19827364"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition font-mono text-sm">
+          </div>
+
+          <div class="lg:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Notas / Observación</label>
+            <input type="text" id="campo-observaciones" placeholder="Ej: Cliente canceló por transferencia, póliza emitida en Sura"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition text-sm">
+          </div>
+
+        </div>
+
+        <div class="flex items-center justify-end space-x-3 pt-2">
+          <button type="button" onclick="limpiarFormularioCompleto()" class="px-4 py-2 border border-slate-300 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium transition">
+            Limpiar Datos
+          </button>
+          <button type="submit" id="btn-guardar" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg text-sm shadow-md flex items-center transition">
+            <i data-lucide="check" class="w-4 h-4 mr-2"></i>
+            Guardar y Archivar Registro
+          </button>
+        </div>
+
+      </form>
+    </section>
+
+    <!-- TABLA DE HISTORIAL Y BÚSQUEDA -->
+    <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Historial y Verificación de Pólizas</h2>
+          <p class="text-xs text-slate-500">Búsqueda rápida por placa, cédula o comprador para todo el equipo</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="filtro-mes" onchange="cargarRegistros()" class="px-3 py-1.5 text-xs font-semibold bg-slate-100 border border-slate-300 rounded-lg focus:outline-none">
+          </select>
+
+          <div class="relative min-w-[260px]">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="filtro-busqueda" oninput="debounceCargarRegistros()" placeholder="Buscar placa, cédula, cliente..."
+              class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLA -->
+      <div class="overflow-x-auto rounded-lg border border-slate-200">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-100 text-xs font-bold uppercase text-slate-700 border-b border-slate-200">
+            <tr>
+              <th class="py-3 px-3">Fecha</th>
+              <th class="py-3 px-3">Placa</th>
+              <th class="py-3 px-3">Comprador</th>
+              <th class="py-3 px-3">Cédula</th>
+              <th class="py-3 px-3">Concesionario</th>
+              <th class="py-3 px-3 text-right">Valor Seguro</th>
+              <th class="py-3 px-3 text-right col-comision">Comisión</th>
+              <th class="py-3 px-3 text-center">Comprobante</th>
+              <th class="py-3 px-3 text-center col-acciones">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-cuerpo" class="divide-y divide-slate-200">
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Estado vacío -->
+      <div id="tabla-vacia" class="hidden text-center py-10">
+        <i data-lucide="folder-search" class="w-10 h-10 mx-auto text-slate-300 mb-2"></i>
+        <p class="text-sm font-semibold text-slate-500">No hay registros con ese criterio de búsqueda</p>
+        <p class="text-xs text-slate-400">Registra una moto o cambia el filtro de búsqueda</p>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MODAL DE PANEL DE ADMINISTRACIÓN (USUARIOS Y MANTENIMIENTO) -->
+  <div id="modal-panel-admin" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center space-x-2">
+          <div class="p-2 bg-amber-100 text-amber-700 rounded-lg">
+            <i data-lucide="shield" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 text-base">Panel de Control & Accesos MG</h3>
+            <p class="text-xs text-slate-500">Administra quién puede entrar y el mantenimiento general</p>
+          </div>
+        </div>
+        <button onclick="cerrarPanelAdmin()" class="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- PESTAÑAS -->
+      <div class="flex border-b border-slate-200 space-x-4">
+        <button id="tab-btn-usuarios" onclick="cambiarTabAdmin('usuarios')" class="pb-2 text-sm font-bold border-b-2 border-blue-600 text-blue-600 flex items-center">
+          <i data-lucide="users" class="w-4 h-4 mr-1.5"></i> Gestión de Usuarios
+        </button>
+        <button id="tab-btn-mantenimiento" onclick="cambiarTabAdmin('mantenimiento')" class="pb-2 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center">
+          <i data-lucide="trash-2" class="w-4 h-4 mr-1.5"></i> Mantenimiento e Historial
+        </button>
+      </div>
+
+      <!-- CONTENIDO PESTAÑA 1: GESTIÓN DE USUARIOS -->
+      <div id="tab-contenido-usuarios" class="space-y-4">
+        
+        <!-- Formulario nuevo usuario -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+          <h4 class="text-xs font-bold text-slate-700 uppercase mb-3 flex items-center">
+            <i data-lucide="user-plus" class="w-4 h-4 mr-1.5 text-blue-600"></i> Dar Acceso a Nuevo Compañero
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="block font-semibold mb-1">Nombre Completo</label>
+              <input type="text" id="nuevo-user-nombre" placeholder="Ej: Andrés Gómez" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg">
+            </div>
+            <div>
+              <label class="block font-semibold mb-1">Nombre de Usuario (Login)</label>
+              <input type="text" id="nuevo-user-login" placeholder="Ej: andres" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg">
+            </div>
+            <div>
+              <label class="block font-semibold mb-1">Contraseña</label>
+              <input type="password" id="nuevo-user-pass" placeholder="Clave para el compañero" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg">
+            </div>
+            <div>
+              <label class="block font-semibold mb-1">Nivel de Acceso / Rol</label>
+              <select id="nuevo-user-rol" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg font-medium">
+                <option value="operador">Operador (Puede registrar y ver pólizas, SIN ver comisiones)</option>
+                <option value="admin">Administrador (Acceso total a comisiones, borrar y DIAN)</option>
+                <option value="consulta">Solo Consulta (Solo puede buscar y ver pólizas)</option>
+              </select>
+            </div>
+          </div>
+          <div class="mt-3 flex justify-end">
+            <button onclick="guardarNuevoUsuario()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center shadow transition">
+              <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Crear Usuario
+            </button>
+          </div>
+        </div>
+
+        <!-- Lista de usuarios activos -->
+        <div>
+          <h4 class="text-xs font-bold text-slate-700 uppercase mb-2">Usuarios con Acceso</h4>
+          <div class="border border-slate-200 rounded-xl overflow-hidden">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 font-bold uppercase text-slate-600">
+                <tr>
+                  <th class="py-2.5 px-3">Nombre</th>
+                  <th class="py-2.5 px-3">Usuario</th>
+                  <th class="py-2.5 px-3">Rol</th>
+                  <th class="py-2.5 px-3 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="lista-usuarios-cuerpo" class="divide-y divide-slate-200">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CONTENIDO PESTAÑA 2: MANTENIMIENTO E HISTORIAL -->
+      <div id="tab-contenido-mantenimiento" class="space-y-4 hidden">
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 space-y-3">
+          <div class="flex items-start space-x-3">
+            <div class="p-2 bg-red-100 text-red-700 rounded-lg mt-0.5">
+              <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-red-900">Vaciar Todo el Historial y Comprobantes</h4>
+              <p class="text-xs text-red-700 mt-1">
+                Esta acción borrará <strong>TODOS</strong> los registros de motos de la base de datos y eliminará los archivos PDF guardados. Úsalo si deseas limpiar los datos de prueba y empezar desde cero.
+              </p>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-red-200">
+            <label class="block text-xs font-bold text-red-900 mb-1">Ingresa tu contraseña de Administrador para confirmar:</label>
+            <div class="flex space-x-2">
+              <input type="password" id="input-confirmar-vaciado" placeholder="Contraseña de Maicol" class="flex-1 px-3 py-2 text-xs border border-red-300 rounded-lg">
+              <button onclick="confirmarVaciarHistorial()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center transition shadow">
+                <i data-lucide="trash-2" class="w-4 h-4 mr-1.5"></i> Vaciar Historial Completo
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL DE INICIO DE SESIÓN -->
+  <div id="modal-login" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-blue-100 text-blue-700 rounded-xl font-bold">
+          MG
+        </div>
+        <div>
+          <h3 class="font-bold text-slate-900">Iniciar Sesión</h3>
+          <p class="text-xs text-slate-500">Ingresa con tu usuario asignado</p>
+        </div>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Usuario</label>
+          <input type="text" id="login-usuario" placeholder="Ej: maicol" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Contraseña</label>
+          <input type="password" id="login-password" placeholder="Contraseña" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+        <p id="error-login" class="hidden text-xs text-red-600 font-semibold"></p>
+      </div>
+
+      <div class="flex space-x-2 pt-2">
+        <button onclick="cerrarLoginModal()" class="w-1/2 py-2 border border-slate-300 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50">Cancelar</button>
+        <button onclick="ejecutarLogin()" class="w-1/2 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 shadow">Ingresar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIFICACIÓN TOAST -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-sm">
+    <span id="toast-icono" class="text-emerald-400">
+      <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+    </span>
+    <span id="toast-mensaje">Operación realizada con éxito</span>
+  </div>
+
+  <script>
+    let archivoSeleccionado = null;
+    let debounceTimer = null;
+    let usuarioActual = null;
+    let dominioFijo = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      recuperarSesion();
+      consultarInfoConexion();
+      cargarMetricas();
+      cargarRegistros();
+    });
+
+    function recuperarSesion() {
+      const sesionGuardada = localStorage.getItem("seguros_mg_usuario");
+      if (sesionGuardada) {
+        try {
+          usuarioActual = JSON.parse(sesionGuardada);
+        } catch (e) {
+          usuarioActual = null;
+        }
+      } else {
+        // Si está en localhost y no ha iniciado sesión manual, inicia como Maicol por defecto
+        if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+          usuarioActual = { nombre: "Maicol", usuario: "maicol", rol: "admin", password: "admin123" };
+          localStorage.setItem("seguros_mg_usuario", JSON.stringify(usuarioActual));
+        } else {
+          usuarioActual = { nombre: "Invitado", usuario: "invitado", rol: "consulta" };
+        }
+      }
+      actualizarInterfazSegunRol();
+    }
+
+    function getAuthHeaders() {
+      const headers = {};
+      if (usuarioActual && usuarioActual.usuario && usuarioActual.password) {
+        headers["X-User-Name"] = usuarioActual.usuario;
+        headers["X-User-Pass"] = usuarioActual.password;
+      }
+      return headers;
+    }
+
+    function actualizarInterfazSegunRol() {
+      const textoUsuario = document.getElementById("texto-usuario");
+      const btnAdmin = document.getElementById("btn-panel-admin");
+      const btnExcel = document.getElementById("btn-descargar-excel");
+      const textoAuth = document.getElementById("texto-auth-action");
+      const cardComisiones = document.getElementById("card-comisiones");
+      const cardTotal = document.getElementById("card-total");
+      const contenedorComision = document.getElementById("contenedor-campo-comision");
+      const seccionFormulario = document.getElementById("seccion-formulario");
+
+      if (!usuarioActual || usuarioActual.rol === 'consulta') {
+        textoUsuario.textContent = "Modo Consulta";
+        btnAdmin.classList.add("hidden");
+        btnExcel.classList.add("hidden");
+        textoAuth.textContent = "Iniciar Sesión";
+        cardComisiones.classList.add("hidden");
+        cardTotal.classList.add("hidden");
+        contenedorComision.classList.add("hidden");
+        document.querySelectorAll(".col-comision").forEach(el => el.classList.add("hidden"));
+        document.querySelectorAll(".col-acciones").forEach(el => el.classList.add("hidden"));
+      } else if (usuarioActual.rol === 'operador') {
+        textoUsuario.textContent = `${usuarioActual.nombre} (Operador)`;
+        btnAdmin.classList.add("hidden");
+        btnExcel.classList.add("hidden");
+        textoAuth.textContent = "Cerrar Sesión";
+        cardComisiones.classList.add("hidden");
+        cardTotal.classList.add("hidden");
+        contenedorComision.classList.add("hidden");
+        document.querySelectorAll(".col-comision").forEach(el => el.classList.add("hidden"));
+        document.querySelectorAll(".col-acciones").forEach(el => el.classList.add("hidden"));
+      } else if (usuarioActual.rol === 'admin') {
+        textoUsuario.textContent = `${usuarioActual.nombre} (Administrador)`;
+        btnAdmin.classList.remove("hidden");
+        btnExcel.classList.remove("hidden");
+        textoAuth.textContent = "Cerrar Sesión";
+        cardComisiones.classList.remove("hidden");
+        cardTotal.classList.remove("hidden");
+        contenedorComision.classList.remove("hidden");
+        document.querySelectorAll(".col-comision").forEach(el => el.classList.remove("hidden"));
+        document.querySelectorAll(".col-acciones").forEach(el => el.classList.remove("hidden"));
+      }
+      lucide.createIcons();
+    }
+
+    async function consultarInfoConexion() {
+      try {
+        const resp = await fetch("/api/info-conexion");
+        const data = await resp.json();
+        
+        // Priorizar dominio fijo de localtunnel si existe, o el hostname de red
+        if (data.enlace_publico) {
+          dominioFijo = data.enlace_publico;
+        } else {
+          dominioFijo = `https://transito-mg.loca.lt (o en red: http://${data.hostname}:5000)`;
+        }
+        document.getElementById("texto-dominio").textContent = dominioFijo;
+      } catch (e) {
+        console.warn("Error consultando conexión:", e);
+      }
+    }
+
+    function copiarDominio() {
+      if (dominioFijo) {
+        const urlLimpia = dominioFijo.includes(" ") ? dominioFijo.split(" ")[0] : dominioFijo;
+        navigator.clipboard.writeText(urlLimpia);
+        mostrarToast("¡Dominio copiado al portapapeles!");
+      }
+    }
+
+    function toggleAuthModal() {
+      if (usuarioActual && usuarioActual.rol !== 'consulta') {
+        // Cerrar sesión
+        localStorage.removeItem("seguros_mg_usuario");
+        usuarioActual = { nombre: "Invitado", usuario: "invitado", rol: "consulta" };
+        actualizarInterfazSegunRol();
+        cargarMetricas();
+        cargarRegistros();
+        mostrarToast("Sesión cerrada. Ahora estás en modo consulta.");
+      } else {
+        document.getElementById("login-usuario").value = "";
+        document.getElementById("login-password").value = "";
+        document.getElementById("error-login").classList.add("hidden");
+        document.getElementById("modal-login").classList.remove("hidden");
+        document.getElementById("login-usuario").focus();
+      }
+    }
+
+    function cerrarLoginModal() {
+      document.getElementById("modal-login").classList.add("hidden");
+    }
+
+    async function ejecutarLogin() {
+      const u = document.getElementById("login-usuario").value.trim();
+      const p = document.getElementById("login-password").value.trim();
+      const err = document.getElementById("error-login");
+
+      try {
+        const resp = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ usuario: u, password: p })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          usuarioActual = { ...data.usuario, password: p };
+          localStorage.setItem("seguros_mg_usuario", JSON.stringify(usuarioActual));
+          cerrarLoginModal();
+          actualizarInterfazSegunRol();
+          cargarMetricas();
+          cargarRegistros();
+          mostrarToast(`¡Bienvenido, ${usuarioActual.nombre}!`);
+        } else {
+          err.textContent = data.error || "Credenciales incorrectas";
+          err.classList.remove("hidden");
+        }
+      } catch (e) {
+        err.textContent = "Error de conexión";
+        err.classList.remove("hidden");
+      }
+    }
+
+    // PANEL DE ADMINISTRACIÓN
+    function abrirPanelAdmin() {
+      document.getElementById("modal-panel-admin").classList.remove("hidden");
+      cambiarTabAdmin('usuarios');
+      cargarListaUsuarios();
+    }
+
+    function cerrarPanelAdmin() {
+      document.getElementById("modal-panel-admin").classList.add("hidden");
+    }
+
+    function cambiarTabAdmin(tab) {
+      const btnU = document.getElementById("tab-btn-usuarios");
+      const btnM = document.getElementById("tab-btn-mantenimiento");
+      const contU = document.getElementById("tab-contenido-usuarios");
+      const contM = document.getElementById("tab-contenido-mantenimiento");
+
+      if (tab === 'usuarios') {
+        btnU.className = "pb-2 text-sm font-bold border-b-2 border-blue-600 text-blue-600 flex items-center";
+        btnM.className = "pb-2 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center";
+        contU.classList.remove("hidden");
+        contM.classList.add("hidden");
+      } else {
+        btnM.className = "pb-2 text-sm font-bold border-b-2 border-red-600 text-red-600 flex items-center";
+        btnU.className = "pb-2 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center";
+        contM.classList.remove("hidden");
+        contU.classList.add("hidden");
+      }
+      lucide.createIcons();
+    }
+
+    async function cargarListaUsuarios() {
+      try {
+        const resp = await fetch("/api/usuarios", { headers: getAuthHeaders() });
+        const data = await resp.json();
+        const tbody = document.getElementById("lista-usuarios-cuerpo");
+        tbody.innerHTML = "";
+
+        if (data.usuarios) {
+          data.usuarios.forEach(u => {
+            const tr = document.createElement("tr");
+            let rolBadge = `<span class="px-2 py-0.5 rounded font-semibold bg-blue-100 text-blue-800">Operador</span>`;
+            if (u.rol === 'admin') rolBadge = `<span class="px-2 py-0.5 rounded font-semibold bg-amber-100 text-amber-800">Administrador</span>`;
+            if (u.rol === 'consulta') rolBadge = `<span class="px-2 py-0.5 rounded font-semibold bg-slate-100 text-slate-700">Consulta</span>`;
+
+            let btnBorrar = `<button onclick="eliminarUsuario(${u.id}, '${u.usuario}')" class="text-slate-400 hover:text-red-600 p-1 rounded" title="Eliminar"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+            if (usuarioActual && usuarioActual.id === u.id) {
+              btnBorrar = `<span class="text-slate-400 text-xs italic">Tú</span>`;
+            }
+
+            tr.innerHTML = `
+              <td class="py-2.5 px-3 font-medium text-slate-800">${u.nombre}</td>
+              <td class="py-2.5 px-3 font-mono text-slate-600">${u.usuario}</td>
+              <td class="py-2.5 px-3">${rolBadge}</td>
+              <td class="py-2.5 px-3 text-center">${btnBorrar}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+          lucide.createIcons();
+        }
+      } catch (e) {
+        console.error("Error al cargar usuarios:", e);
+      }
+    }
+
+    async function guardarNuevoUsuario() {
+      const nombre = document.getElementById("nuevo-user-nombre").value.trim();
+      const user = document.getElementById("nuevo-user-login").value.trim();
+      const pass = document.getElementById("nuevo-user-pass").value.trim();
+      const rol = document.getElementById("nuevo-user-rol").value;
+
+      if (!nombre || !user || !pass) {
+        mostrarToast("Completa todos los campos del nuevo usuario", true);
+        return;
+      }
+
+      try {
+        const resp = await fetch("/api/usuarios", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+          body: JSON.stringify({ nombre, usuario: user, password: pass, rol })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          mostrarToast(`Usuario ${user} creado con éxito`);
+          document.getElementById("nuevo-user-nombre").value = "";
+          document.getElementById("nuevo-user-login").value = "";
+          document.getElementById("nuevo-user-pass").value = "";
+          cargarListaUsuarios();
+        } else {
+          mostrarToast(data.error || "No se pudo crear el usuario", true);
+        }
+      } catch (e) {
+        mostrarToast("Error de conexión al crear usuario", true);
+      }
+    }
+
+    async function eliminarUsuario(id, username) {
+      if (!confirm(`¿Estás seguro de quitar el acceso al usuario '${username}'?`)) return;
+
+      try {
+        const resp = await fetch(`/api/usuarios/${id}`, {
+          method: "DELETE",
+          headers: getAuthHeaders()
+        });
+        const data = await resp.json();
+        if (data.success) {
+          mostrarToast(`Usuario ${username} eliminado`);
+          cargarListaUsuarios();
+        } else {
+          mostrarToast(data.error || "Error al eliminar usuario", true);
+        }
+      } catch (e) {
+        mostrarToast("Error de conexión", true);
+      }
+    }
+
+    // BOTÓN LIMPIAR TODO EL FORMULARIO
+    function limpiarFormularioCompleto() {
+      document.getElementById("form-registro").reset();
+      document.getElementById("campo-placa").value = "";
+      document.getElementById("campo-cedula").value = "";
+      document.getElementById("campo-nombre").value = "";
+      document.getElementById("campo-telefono").value = "";
+      document.getElementById("campo-concesionario").value = "";
+      document.getElementById("campo-valor").value = "";
+      document.getElementById("campo-comision").value = "0";
+      document.getElementById("campo-referencia").value = "";
+      document.getElementById("campo-observaciones").value = "";
+      quitarArchivo();
+      mostrarToast("Todos los campos fueron limpiados");
+      document.getElementById("campo-placa").focus();
+    }
+
+    // BOTÓN VACIAR HISTORIAL COMPLETO
+    async function confirmarVaciarHistorial() {
+      const pwd = document.getElementById("input-confirmar-vaciado").value.trim();
+      if (!pwd) {
+        mostrarToast("Ingresa tu contraseña para confirmar el vaciado", true);
+        return;
+      }
+
+      if (!confirm("⚠️ ¿ÚLTIMA CONFIRMACIÓN: Estás 100% seguro de borrar TODO el historial y todos los comprobantes? Esta acción no se puede deshacer.")) {
+        return;
+      }
+
+      try {
+        const resp = await fetch("/api/vaciar-historial", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+          body: JSON.stringify({ password: pwd })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          mostrarToast("¡Historial y comprobantes vaciados con éxito!");
+          document.getElementById("input-confirmar-vaciado").value = "";
+          cerrarPanelAdmin();
+          cargarMetricas();
+          cargarRegistros();
+        } else {
+          mostrarToast(data.error || "No se pudo vaciar el historial", true);
+        }
+      } catch (e) {
+        mostrarToast("Error de conexión al vaciar historial", true);
+      }
+    }
+
+    // MONEDA
+    function formatoMoneda(valor) {
+      if (valor === null || valor === undefined) return "Protegido";
+      return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        maximumFractionDigits: 0
+      }).format(valor);
+    }
+
+    function mostrarToast(mensaje, esError = false) {
+      const toast = document.getElementById("toast");
+      const msg = document.getElementById("toast-mensaje");
+      msg.textContent = mensaje;
+      if (esError) {
+        toast.className = "fixed bottom-5 right-5 z-50 transform translate-y-0 opacity-100 transition-all duration-300 bg-red-800 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-sm";
+      } else {
+        toast.className = "fixed bottom-5 right-5 z-50 transform translate-y-0 opacity-100 transition-all duration-300 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-sm";
+      }
+
+      setTimeout(() => {
+        toast.classList.remove("translate-y-0", "opacity-100");
+        toast.classList.add("translate-y-20", "opacity-0");
+      }, 4000);
+    }
+
+    // DRAG & DROP
+    function onDragOver(e) {
+      e.preventDefault();
+      document.getElementById("dropzone").classList.add("drag-active");
+    }
+
+    function onDragLeave(e) {
+      e.preventDefault();
+      document.getElementById("dropzone").classList.remove("drag-active");
+    }
+
+    function onDropFile(e) {
+      e.preventDefault();
+      document.getElementById("dropzone").classList.remove("drag-active");
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        procesarArchivo(e.dataTransfer.files[0]);
+      }
+    }
+
+    function seleccionarArchivo(input) {
+      if (input.files && input.files[0]) {
+        procesarArchivo(input.files[0]);
+      }
+    }
+
+    function procesarArchivo(file) {
+      if (!file.name.toLowerCase().endsWith('.pdf')) {
+        mostrarToast("Por favor selecciona un archivo PDF válido", true);
+        return;
+      }
+      archivoSeleccionado = file;
+      document.getElementById("dropzone-vacio").classList.add("hidden");
+      document.getElementById("dropzone-cargado").classList.remove("hidden");
+      document.getElementById("archivo-nombre").textContent = file.name;
+      document.getElementById("archivo-tamano").textContent = (file.size / 1024).toFixed(1) + " KB";
+      
+      analizarPDF(file);
+    }
+
+    function quitarArchivo(e) {
+      if (e) e.stopPropagation();
+      archivoSeleccionado = null;
+      document.getElementById("input-archivo").value = "";
+      document.getElementById("dropzone-vacio").classList.remove("hidden");
+      document.getElementById("dropzone-cargado").classList.add("hidden");
+      document.getElementById("deteccion-alert").classList.add("hidden");
+    }
+
+    async function analizarPDF(file) {
+      const formData = new FormData();
+      formData.append("archivo", file);
+
+      try {
+        const resp = await fetch("/api/analizar-pdf", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: formData
+        });
+        const data = await resp.json();
+        if (data.sugerencias) {
+          const s = data.sugerencias;
+          let encontrados = [];
+
+          if (s.valor_pagado && !document.getElementById("campo-valor").value) {
+            document.getElementById("campo-valor").value = s.valor_pagado;
+            encontrados.push(`Valor: ${formatoMoneda(s.valor_pagado)}`);
+          }
+          if (s.banco) {
+            document.getElementById("campo-banco").value = s.banco;
+            encontrados.push(`Banco: ${s.banco}`);
+          }
+          if (s.referencia && !document.getElementById("campo-referencia").value) {
+            document.getElementById("campo-referencia").value = s.referencia;
+            encontrados.push(`Ref: ${s.referencia}`);
+          }
+          if (s.placa && !document.getElementById("campo-placa").value) {
+            document.getElementById("campo-placa").value = s.placa;
+            encontrados.push(`Placa: ${s.placa}`);
+          }
+
+          if (encontrados.length > 0) {
+            const alertBox = document.getElementById("deteccion-alert");
+            document.getElementById("deteccion-mensaje").textContent = "Auto-detectado: " + encontrados.join(" | ");
+            alertBox.classList.remove("hidden");
+            lucide.createIcons();
+          }
+        }
+      } catch (err) {
+        console.warn("No se pudo analizar el PDF:", err);
+      }
+    }
+
+    async function cargarMetricas() {
+      const mes = document.getElementById("filtro-mes").value;
+      try {
+        const resp = await fetch(`/api/metricas?mes=${encodeURIComponent(mes)}`, {
+          headers: getAuthHeaders()
+        });
+        const data = await resp.json();
+
+        document.getElementById("stat-motos").textContent = data.mes.total_motos;
+        document.getElementById("stat-pagado").textContent = formatoMoneda(data.mes.total_pagado_seguros);
+        
+        if (data.mes.total_comisiones !== null) {
+          document.getElementById("stat-comision").textContent = formatoMoneda(data.mes.total_comisiones);
+          document.getElementById("stat-total").textContent = formatoMoneda(data.mes.total_ingresado_cuenta);
+        }
+
+        const selMes = document.getElementById("filtro-mes");
+        if (selMes.options.length <= 1) {
+          selMes.innerHTML = '<option value="">Todos los meses</option>';
+          data.meses_disponibles.forEach(m => {
+            const opt = document.createElement("option");
+            opt.value = m;
+            opt.textContent = `Periodo: ${m}`;
+            if (m === data.mes_seleccionado) opt.selected = true;
+            selMes.appendChild(opt);
+          });
+        }
+      } catch (err) {
+        console.error("Error cargando métricas:", err);
+      }
+    }
+
+    function debounceCargarRegistros() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(cargarRegistros, 250);
+    }
+
+    async function cargarRegistros() {
+      const q = document.getElementById("filtro-busqueda").value;
+      const mes = document.getElementById("filtro-mes").value;
+
+      try {
+        const resp = await fetch(`/api/registros?q=${encodeURIComponent(q)}&mes=${encodeURIComponent(mes)}`, {
+          headers: getAuthHeaders()
+        });
+        const data = await resp.json();
+        const tbody = document.getElementById("tabla-cuerpo");
+        const emptyState = document.getElementById("tabla-vacia");
+
+        tbody.innerHTML = "";
+
+        if (data.registros.length === 0) {
+          emptyState.classList.remove("hidden");
+        } else {
+          emptyState.classList.add("hidden");
+          data.registros.forEach(r => {
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+
+            let pdfBoton = `<span class="text-xs text-slate-400">Sin archivo</span>`;
+            if (r.archivo_comprobante) {
+              pdfBoton = `
+                <a href="/comprobantes/${r.archivo_comprobante}" target="_blank" 
+                   class="inline-flex items-center px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold rounded-md border border-blue-200 transition">
+                  <i data-lucide="file-text" class="w-3.5 h-3.5 mr-1"></i>
+                  Ver PDF
+                </a>
+              `;
+            }
+
+            const esAdminActual = usuarioActual && usuarioActual.rol === 'admin';
+
+            const comisionCol = esAdminActual 
+              ? `<td class="py-3 px-3 text-right font-semibold text-emerald-600 col-comision">+${formatoMoneda(r.comision)}</td>`
+              : `<td class="py-3 px-3 text-right text-xs text-slate-400 col-comision hidden">-</td>`;
+
+            const accionCol = esAdminActual 
+              ? `<td class="py-3 px-3 text-center whitespace-nowrap col-acciones">
+                  <button onclick="eliminarRegistro(${r.id}, '${r.placa}')" class="p-1 text-slate-400 hover:text-red-600 rounded hover:bg-red-50 transition" title="Eliminar">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                 </td>`
+              : `<td class="py-3 px-3 text-center col-acciones hidden"></td>`;
+
+            tr.innerHTML = `
+              <td class="py-3 px-3 text-xs whitespace-nowrap text-slate-500">${r.fecha_registro.split(" ")[0]}</td>
+              <td class="py-3 px-3 font-mono font-bold text-slate-900">${r.placa}</td>
+              <td class="py-3 px-3 font-medium text-slate-800">${r.nombre_cliente}</td>
+              <td class="py-3 px-3 font-mono text-xs text-slate-600">${r.cedula || 'S/C'}</td>
+              <td class="py-3 px-3 text-xs">
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded font-medium">${r.concesionario}</span>
+              </td>
+              <td class="py-3 px-3 text-right font-semibold text-slate-900">${formatoMoneda(r.valor_pagado)}</td>
+              ${comisionCol}
+              <td class="py-3 px-3 text-center whitespace-nowrap">${pdfBoton}</td>
+              ${accionCol}
+            `;
+            tbody.appendChild(tr);
+          });
+          lucide.createIcons();
+        }
+      } catch (err) {
+        console.error("Error al cargar registros:", err);
+      }
+    }
+
+    async function guardarRegistro(e) {
+      e.preventDefault();
+
+      if (!usuarioActual || usuarioActual.rol === 'consulta') {
+        mostrarToast("Debes iniciar sesión con una cuenta para registrar motos", true);
+        toggleAuthModal();
+        return;
+      }
+
+      const btn = document.getElementById("btn-guardar");
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 mr-2 animate-spin"></i> Guardando...`;
+      lucide.createIcons();
+
+      const formData = new FormData();
+      formData.append("placa", document.getElementById("campo-placa").value);
+      formData.append("cedula", document.getElementById("campo-cedula").value);
+      formData.append("nombre_cliente", document.getElementById("campo-nombre").value);
+      formData.append("telefono", document.getElementById("campo-telefono").value);
+      formData.append("concesionario", document.getElementById("campo-concesionario").value);
+      formData.append("valor_pagado", document.getElementById("campo-valor").value);
+      formData.append("comision", document.getElementById("campo-comision").value);
+      formData.append("banco", document.getElementById("campo-banco").value);
+      formData.append("numero_referencia", document.getElementById("campo-referencia").value);
+      formData.append("observaciones", document.getElementById("campo-observaciones").value);
+
+      if (archivoSeleccionado) {
+        formData.append("archivo", archivoSeleccionado);
+      }
+
+      try {
+        const resp = await fetch("/api/registros", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: formData
+        });
+        
+        let data = {};
+        try {
+          data = await resp.json();
+        } catch (parseErr) {
+          console.error("Respuesta no es JSON:", parseErr);
+        }
+
+        if (resp.ok && data.success) {
+          mostrarToast(`¡Moto ${document.getElementById("campo-placa").value.toUpperCase()} guardada con éxito!`);
+          limpiarFormularioCompleto();
+          cargarMetricas();
+          cargarRegistros();
+        } else {
+          mostrarToast(data.error || `Error del servidor (${resp.status})`, true);
+        }
+      } catch (err) {
+        console.error("Error al guardar:", err);
+        mostrarToast("No se pudo conectar con el servidor", true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="check" class="w-4 h-4 mr-2"></i> Guardar y Archivar Registro`;
+        lucide.createIcons();
+      }
+    }
+
+    async function eliminarRegistro(id, placa) {
+      if (!confirm(`¿Estás seguro de eliminar el registro de la placa ${placa}? Se borrará también su comprobante asociado.`)) {
+        return;
+      }
+
+      try {
+        const resp = await fetch(`/api/registros/${id}`, {
+          method: "DELETE",
+          headers: getAuthHeaders()
+        });
+        const data = await resp.json();
+        if (data.success) {
+          mostrarToast(`Registro de la placa ${placa} eliminado.`);
+          cargarMetricas();
+          cargarRegistros();
+        } else {
+          mostrarToast(data.error || "No autorizado para eliminar", true);
+        }
+      } catch (err) {
+        mostrarToast("Error al eliminar el registro", true);
+      }
+    }
+
+    function descargarExcel() {
+      if (!usuarioActual || usuarioActual.rol !== 'admin') {
+        mostrarToast("Solo el Administrador puede descargar el reporte fiscal", true);
+        return;
+      }
+      const mes = document.getElementById("filtro-mes").value;
+      window.location.href = `/api/exportar-excel?mes=${encodeURIComponent(mes)}&u=${encodeURIComponent(usuarioActual.usuario)}&p=${encodeURIComponent(usuarioActual.password)}`;
+    }
+  </script>
+</body>
+</html>
